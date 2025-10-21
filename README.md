@@ -1,7 +1,5 @@
 # Reinforcement Learning for Atari
-Experiments with Reinforcement Learning to play Atari games.
-
-See the original [Google Deepmind Atari paper](https://arxiv.org/pdf/1312.5602). 
+Experiments with Reinforcement Learning to play Atari games. See the original [Google Deepmind Atari paper](https://arxiv.org/pdf/1312.5602). 
 
 At the time of writing, the described experiments are limited to 'Pong' with further expansion for other games planned.  
 
@@ -56,6 +54,7 @@ Green = [good_model.pth](https://github.com/AzamAbdul/Atari_RL_Playground/tree/m
 python pong.py              # Train
 python pong.py --log-timing # Train with timing logs
 ```
+
 
 
 
