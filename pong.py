@@ -14,24 +14,27 @@ from datetime import datetime
 import argparse
 warnings.filterwarnings("ignore", category=UserWarning, module="gymnasium.wrappers.rendering")
 
-env = gymnasium.make("ALE/Pong-v5")
-
 gamma = 0.98
 batch_size = 64  # Increased for better GPU utilization
-n_actions = env.action_space.n
 epochs = 500
 learning_freq = 1  # Learn every N steps instead of every step
 min_replay_size = 10000  # Wait for sufficient experience before learning
-
-agent = DeepQLearningAgent(learning_rate=0.00005, gamma=gamma, n_actions=n_actions)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train Pong DQN')
     parser.add_argument('--log-timing', action='store_true', default=False,
                         help='Enable detailed timing logging (default: False)')
+    parser.add_argument('--demo', action='store_true', default=False,
+                        help='Run in demo mode (play only, no training)')
+    parser.add_argument('-m', '--model', type=str, default='./models/model.pth',
+                        help='Path to model file (default: model.pth)')
     return parser.parse_args()
 
 def train_pong(log_timing=False):
+    env = gymnasium.make("ALE/Pong-v5")
+    n_actions = env.action_space.n
+    agent = DeepQLearningAgent(learning_rate=0.00005, gamma=gamma, n_actions=n_actions)
+
     print("Starting training...")
     agent.model.train()
     rewards_per_epoch = []
@@ -180,12 +183,15 @@ def train_pong(log_timing=False):
     print("Training completed.")
     save_model(agent.model)
     print("Model saved.")
+    env.close()
 
-def play_pong():
+def play_pong(model_path='model.pth'):
     print("Loading model for evaluation...")
-    model = load_model()
+    model = load_model(model_path)
     model.eval()
     total_rewards = []
+
+    env = gymnasium.make("ALE/Pong-v5", render_mode="human")
 
     for episode in range(10):
         state, _ = env.reset()
@@ -211,10 +217,14 @@ def play_pong():
         print(f"Episode {episode + 1}: Total Reward = {total_reward}")
 
     print(f"Average Reward over 10 Episodes: {np.mean(total_rewards)}")
+    env.close()
 
-# Run training and evaluation
 if __name__ == "__main__":
     args = parse_args()
-    train_pong(log_timing=args.log_timing)
-    play_pong()
-    env.close()
+
+    if args.demo:
+        print("Running demo mode")
+        play_pong(model_path=args.model)
+    else:
+        print("Running training pipeline")
+        train_pong(log_timing=args.log_timing)

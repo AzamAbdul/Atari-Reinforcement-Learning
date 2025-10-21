@@ -1,3 +1,6 @@
+# venv files
+atari_env/
+
 # Training logs and data
 *.csv
 
