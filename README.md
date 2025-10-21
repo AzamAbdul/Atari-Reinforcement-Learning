@@ -51,8 +51,13 @@ Green = [good_model.pth](https://github.com/AzamAbdul/Atari_RL_Playground/tree/m
 ## Usage
 
 ```bash
-python pong.py              # Train
-python pong.py --log-timing # Train with timing logs
+# Training
+python pong.py              # Train a new model
+python pong.py --log-timing # Train with detailed timing logs
+
+# Render Demo
+python pong.py --demo                              # Render with default model (./models/model.pth)
+python pong.py --demo -m ./models/good_model.pth   # Render with path to a provided model
 ```
 
 
