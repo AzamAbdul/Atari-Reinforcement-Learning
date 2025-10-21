@@ -102,8 +102,10 @@ class DeepQLearningAgent:
 
 
         with torch.no_grad():
-            max_next_q_values = self.target_net(next_states).max(1)[0]
-            target_q_values = rewards + (1 - dones) * self.gamma * max_next_q_values
+            next_actions = self.model(next_states).argmax(1, keepdim=True)              # select (online)
+            next_q_tgt   = self.target_net(next_states).gather(1, next_actions).squeeze(1)  # evaluate (target)
+            target_q_values = rewards + (1 - dones) * self.gamma * next_q_tgt
+
 
 
         loss = self.loss_fn(q_values, target_q_values)

@@ -14,7 +14,7 @@ from datetime import datetime
 import argparse
 warnings.filterwarnings("ignore", category=UserWarning, module="gymnasium.wrappers.rendering")
 
-env = gymnasium.make("ALE/Pong-v5", render_mode="human")
+env = gymnasium.make("ALE/Pong-v5")
 
 gamma = 0.98
 batch_size = 64  # Increased for better GPU utilization
@@ -154,7 +154,7 @@ def train_pong(log_timing=False):
                     print(f"Wrote {len(timing_buffer)} timing records to {csv_filename}")
                     timing_buffer.clear()
 
-            if agent.timestep % 5000 == 0:
+            if agent.timestep % 10000 == 0:
                 agent.update_target_network()
                 print(f"Timestep {agent.timestep}, Epoch {epoch + 1}, Epsilon: {agent.epsilon:.3f}")
 
@@ -215,6 +215,6 @@ def play_pong():
 # Run training and evaluation
 if __name__ == "__main__":
     args = parse_args()
-    #train_pong(log_timing=args.log_timing)
+    train_pong(log_timing=args.log_timing)
     play_pong()
     env.close()
