@@ -1,4 +1,4 @@
-# Pong DQN Solution
+# [WIP] Pong DQN Solution
 
 ## Credits
 
@@ -27,3 +27,4 @@ Fork of the [original Pong DQN implementation](https://github.com/BaptisteBell/R
 python pong.py              # Train
 python pong.py --log-timing # Train with timing logs
 ```
+
