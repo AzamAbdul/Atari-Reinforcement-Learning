@@ -32,6 +32,13 @@ Following list describes the diff between this fork and the original repo
 **Pong Reward @ 500 episodes**
 ![alt text](https://i.imgur.com/NcaBhcF.png)
 
+## TBD Feature Plan
+- Checkpointing
+- Reward and Loss logging gated by cmdline flag
+- Expanded profiling
+- Experiments on more Atari games (beyond Pong)
+- Network architecture refinements
+
 
 ## Usage
 
@@ -39,5 +46,6 @@ Following list describes the diff between this fork and the original repo
 python pong.py              # Train
 python pong.py --log-timing # Train with timing logs
 ```
+
 
 
