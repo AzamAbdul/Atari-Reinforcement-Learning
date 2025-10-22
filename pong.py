@@ -1,24 +1,25 @@
-import typing as t
 import gymnasium
 import numpy as np
 from agent import DeepQLearningAgent
-import random
-from collections import deque
 from model_utils import *
-import ale_py
 import warnings
 import time
 import csv
-import os
 from datetime import datetime
 import argparse
+from pydantic import BaseModel, Field
+
 warnings.filterwarnings("ignore", category=UserWarning, module="gymnasium.wrappers.rendering")
 
-gamma = 0.98
-batch_size = 64  # Increased for better GPU utilization
-epochs = 500
-learning_freq = 1  # Learn every N steps instead of every step
-min_replay_size = 10000  # Wait for sufficient experience before learning
+class HyperParams(BaseModel):
+    gamma: float = Field(0.98, ge=0.9, le=1.0)
+    batch_size: int = Field(64, ge=1)
+    epochs: int = Field(500, ge=1)
+    learning_freq: int = Field(1, ge=1)
+    min_replay_size: int = Field(10_000, ge=0)
+    learning_rate: float = Field(0.000_05, le=1)
+    target_nn_update_freq: int = Field(10_000, ge=1)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train Pong DQN')
@@ -30,10 +31,10 @@ def parse_args():
                         help='Path to model file (default: model.pth)')
     return parser.parse_args()
 
-def train_pong(log_timing=False):
+def train(hyper_params: HyperParams, log_timing=False):
     env = gymnasium.make("ALE/Pong-v5")
     n_actions = env.action_space.n
-    agent = DeepQLearningAgent(learning_rate=0.00005, gamma=gamma, n_actions=n_actions)
+    agent = DeepQLearningAgent(learning_rate=hyper_params.learning_rate, gamma=hyper_params.gamma, n_actions=n_actions)
 
     print("Starting training...")
     agent.model.train()
@@ -86,7 +87,7 @@ def train_pong(log_timing=False):
 
     print(f"Reward data will be logged to {reward_filename} after each epoch")
 
-    for epoch in range(epochs):
+    for epoch in range(hyper_params.epochs):
         state, _ = env.reset()
         stacked_frames = [preprocess(state)] * 4
         state, stacked_frames = stack_frames(stacked_frames, state, is_new_episode=True)
@@ -126,8 +127,8 @@ def train_pong(log_timing=False):
                 learn_start = time.time()
 
             learned = 0
-            if len(agent.memory) > min_replay_size and agent.timestep % learning_freq == 0:
-                loss = agent.learn(batch_size)
+            if len(agent.memory) > hyper_params.min_replay_size and agent.timestep % hyper_params.learning_freq == 0:
+                loss = agent.learn(hyper_params.batch_size)
                 learned = 1
 
                 # Collect loss data for epoch averaging
@@ -157,7 +158,7 @@ def train_pong(log_timing=False):
                     print(f"Wrote {len(timing_buffer)} timing records to {csv_filename}")
                     timing_buffer.clear()
 
-            if agent.timestep % 10000 == 0:
+            if agent.timestep % hyper_params.target_nn_update_freq == 0:
                 agent.update_target_network()
                 print(f"Timestep {agent.timestep}, Epoch {epoch + 1}, Epsilon: {agent.epsilon:.3f}")
 
@@ -175,7 +176,7 @@ def train_pong(log_timing=False):
             writer = csv.writer(csvfile)
             writer.writerow([epoch + 1, total_reward])
 
-        print(f"Epoch {epoch + 1}/{epochs} completed - Total Reward: {total_reward}")
+        print(f"Epoch {epoch + 1}/{hyper_params.epochs} completed - Total Reward: {total_reward}")
         if (epoch + 1) % 10 == 0:
             if log_timing:
                 print(f"Timing data logged to {csv_filename} - {agent.timestep} total steps recorded")
@@ -227,4 +228,5 @@ if __name__ == "__main__":
         play_pong(model_path=args.model)
     else:
         print("Running training pipeline")
-        train_pong(log_timing=args.log_timing)
+        pong_hyper_params = HyperParams()
+        train(log_timing=args.log_timing, hyper_params=pong_hyper_params)
