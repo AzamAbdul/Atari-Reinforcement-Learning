@@ -5,7 +5,7 @@ At the time of writing, the described experiments are limited to 'Pong' with fur
 
 ## Credits
 
-Fork of [Reinforcement Learning repo](https://github.com/BaptisteBell/ReinforcementLearning). Authored by [@BaptisteBell](https://github.com/BaptisteBell) and [@bribridu59](https://github.com/bribridu59).
+This repo is a modified fork of [Reinforcement Learning repo](https://github.com/BaptisteBell/ReinforcementLearning) authored by [@BaptisteBell](https://github.com/BaptisteBell) and [@bribridu59](https://github.com/bribridu59).
 
 ## Modifications & Improvements
 The following list describes the diff between this fork and the original repo
@@ -57,6 +57,7 @@ python pong.py --log-timing # Train with detailed timing logs
 python pong.py --demo                              # Render with default model (./models/model.pth)
 python pong.py --demo -m ./models/good_model.pth   # Render with path to a provided model
 ```
+
 
 
 
