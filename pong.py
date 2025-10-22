@@ -3,8 +3,8 @@ import numpy as np
 from agent import DeepQLearningAgent
 from model_utils import *
 from training_logger import TrainingLogger
+from step_timer import StepTimer
 import warnings
-import time
 from datetime import datetime
 import argparse
 from pydantic import BaseModel, Field
@@ -45,9 +45,10 @@ def train(hyper_params: HyperParams, log_timing=False):
     device = agent.model.device
     print(f"Training on device: {device}")
 
-    # Initialize training logger
+    # Initialize training logger and timer
     timestamp = datetime.now().strftime('%Y%m%d_%H%M')
     logger = TrainingLogger(timestamp, log_timing)
+    timer = StepTimer(enabled=log_timing)
 
     for epoch in range(hyper_params.epochs):
         state, _ = env.reset()
@@ -59,62 +60,57 @@ def train(hyper_params: HyperParams, log_timing=False):
 
 
         while not done:
-            if log_timing:
-                step_start = time.time()
-                action_start = time.time()
+            timer.start('total_step')
 
-            action = agent.choose_action(state)
+            with timer.time('action_selection'):
+                action = agent.choose_action(state)
 
-            if log_timing:
-                action_time = (time.time() - action_start) * 1000
-                env_start = time.time()
+            with timer.time('env_step'):
+                next_state, reward, terminated, truncated, _ = env.step(action)
+                done = terminated or truncated
 
-            next_state, reward, terminated, truncated, _ = env.step(action)
-            done = terminated or truncated
+            with timer.time('preprocessing'):
+                next_state, stacked_frames = stack_frames(stacked_frames, next_state, is_new_episode=False)
 
-            if log_timing:
-                env_time = (time.time() - env_start) * 1000
-                preprocess_start = time.time()
-
-            next_state, stacked_frames = stack_frames(stacked_frames, next_state, is_new_episode=False)
-
-            if log_timing:
-                preprocess_time = (time.time() - preprocess_start) * 1000
-                memory_start = time.time()
-
-            agent.add_memory(state, action, reward, next_state, done)
-
-            if log_timing:
-                memory_time = (time.time() - memory_start) * 1000
-                learn_start = time.time()
+            with timer.time('memory_add'):
+                agent.add_memory(state, action, reward, next_state, done)
 
             learned = 0
-            if len(agent.memory) > hyper_params.min_replay_size and agent.timestep % hyper_params.learning_freq == 0:
-                loss = agent.learn(hyper_params.batch_size)
-                learned = 1
+            with timer.time('learning'):
+                if len(agent.memory) > hyper_params.min_replay_size and agent.timestep % hyper_params.learning_freq == 0:
+                    loss = agent.learn(hyper_params.batch_size)
+                    learned = 1
 
-                # Collect loss data for epoch averaging
-                if loss is not None:
-                    loss_value = loss.item() if hasattr(loss, 'item') else float(loss)
-                    epoch_losses.append(loss_value)
+                    # Collect loss data for epoch averaging
+                    if loss is not None:
+                        loss_value = loss.item() if hasattr(loss, 'item') else float(loss)
+                        epoch_losses.append(loss_value)
 
-                if agent.timestep % 1000 == 0:
-                    print(f"loss: {loss}")
-
-            if log_timing:
-                learn_time = (time.time() - learn_start) * 1000
+                    if agent.timestep % 1000 == 0:
+                        print(f"loss: {loss}")
 
             state = next_state
             total_reward += reward
             agent.timestep += 1
 
+            timer.stop('total_step')
+
+            # Log timing data
             if log_timing:
-                total_step_time = (time.time() - step_start) * 1000
-                logger.add_timing_data([agent.timestep, epoch + 1, action_time, env_time,
-                                       preprocess_time, memory_time, learn_time, total_step_time, learned])
+                logger.add_timing_data([
+                    agent.timestep, epoch + 1,
+                    timer.get('action_selection'),
+                    timer.get('env_step'),
+                    timer.get('preprocessing'),
+                    timer.get('memory_add'),
+                    timer.get('learning'),
+                    timer.get('total_step'),
+                    learned
+                ])
 
                 if agent.timestep % 10000 == 0:
                     logger.flush_timing_buffer()
+                    timer.reset()
 
             if agent.timestep % hyper_params.target_nn_update_freq == 0:
                 agent.update_target_network()
