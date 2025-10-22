@@ -23,15 +23,15 @@ class HyperParams(BaseModel):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train Pong DQN')
-    parser.add_argument('--log-timing', action='store_true', default=False,
-                        help='Enable detailed timing logging (default: False)')
+    parser.add_argument('--enable-perf-logs', action='store_true', default=False,
+                        help='Enable detailed performance logging (default: False)')
     parser.add_argument('--demo', action='store_true', default=False,
                         help='Run in demo mode (play only, no training)')
     parser.add_argument('-m', '--model', type=str, default='./models/model.pth',
                         help='Path to model file (default: model.pth)')
     return parser.parse_args()
 
-def train(hyper_params: HyperParams, log_timing=False):
+def train(hyper_params: HyperParams, enable_perf_logs=False):
     env = gymnasium.make("ALE/Pong-v5")
     n_actions = env.action_space.n
     agent = DeepQLearningAgent(learning_rate=hyper_params.learning_rate, gamma=hyper_params.gamma, n_actions=n_actions)
@@ -45,10 +45,9 @@ def train(hyper_params: HyperParams, log_timing=False):
     device = agent.model.device
     print(f"Training on device: {device}")
 
-    # Initialize training logger and timer
     timestamp = datetime.now().strftime('%Y%m%d_%H%M')
-    logger = TrainingLogger(timestamp, log_timing)
-    timer = StepTimer(enabled=log_timing)
+    logger = TrainingLogger(timestamp, enable_perf_logs)
+    timer = StepTimer(enabled=enable_perf_logs)
 
     for epoch in range(hyper_params.epochs):
         state, _ = env.reset()
@@ -81,7 +80,6 @@ def train(hyper_params: HyperParams, log_timing=False):
                     loss = agent.learn(hyper_params.batch_size)
                     learned = 1
 
-                    # Collect loss data for epoch averaging
                     if loss is not None:
                         loss_value = loss.item() if hasattr(loss, 'item') else float(loss)
                         epoch_losses.append(loss_value)
@@ -95,8 +93,7 @@ def train(hyper_params: HyperParams, log_timing=False):
 
             timer.stop('total_step')
 
-            # Log timing data
-            if log_timing:
+            if enable_perf_logs:
                 logger.add_timing_data([
                     agent.timestep, epoch + 1,
                     timer.get('action_selection'),
@@ -118,12 +115,10 @@ def train(hyper_params: HyperParams, log_timing=False):
 
         rewards_per_epoch.append(total_reward)
 
-        # Write loss data for this epoch
         if len(epoch_losses) > 0:
             avg_loss = sum(epoch_losses) / len(epoch_losses)
             logger.log_loss(epoch + 1, avg_loss)
 
-        # Write reward data for this epoch
         logger.log_reward(epoch + 1, total_reward)
 
         print(f"Epoch {epoch + 1}/{hyper_params.epochs} completed - Total Reward: {total_reward}")
@@ -176,4 +171,4 @@ if __name__ == "__main__":
     else:
         print("Running training pipeline")
         pong_hyper_params = HyperParams()
-        train(log_timing=args.log_timing, hyper_params=pong_hyper_params)
+        train(enable_perf_logs=args.enable_perf_logs, hyper_params=pong_hyper_params)
