@@ -5,12 +5,10 @@ At the time of writing, the described experiments are limited to 'Pong' with fur
 
 ## Credits
 
-Fork of [Reinforcement Learning repo](https://github.com/BaptisteBell/ReinforcementLearning).
-
-Authored by [@BaptisteBell](https://github.com/BaptisteBell) and [@bribridu59](https://github.com/bribridu59).
+Fork of [Reinforcement Learning repo](https://github.com/BaptisteBell/ReinforcementLearning). Authored by [@BaptisteBell](https://github.com/BaptisteBell) and [@bribridu59](https://github.com/bribridu59).
 
 ## Modifications & Improvements
-Following list describes the diff between this fork and the original repo
+The following list describes the diff between this fork and the original repo
 
 **Training:**
 - Double DQN (instead of target vs online network trick)
@@ -59,6 +57,7 @@ python pong.py --log-timing # Train with detailed timing logs
 python pong.py --demo                              # Render with default model (./models/model.pth)
 python pong.py --demo -m ./models/good_model.pth   # Render with path to a provided model
 ```
+
 
 
 
