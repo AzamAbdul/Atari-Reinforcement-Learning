@@ -44,8 +44,8 @@ class TrainingLogger:
             self.timing_logger = self._create_csv_logger(
                 filename=f'training_timing_{timestamp}.csv',
                 headers=['step', 'epoch', 'action_selection_ms', 'env_step_ms',
-                        'preprocessing_ms', 'memory_add_ms', 'learning_ms',
-                        'total_step_ms', 'learned']
+                        'preprocessing_ms', 'memory_add_ms', 'online_net_training_ms',
+                        'target_net_training_ms', 'total_step_ms']
             )
             print(f"Timing data will be logged to training_timing_{timestamp}.csv every 10000 steps")
         else:

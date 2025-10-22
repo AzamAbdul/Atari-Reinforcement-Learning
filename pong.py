@@ -74,54 +74,49 @@ def train(hyper_params: HyperParams, enable_perf_logs=False):
             with timer.time('memory_add'):
                 agent.add_memory(state, action, reward, next_state, done)
 
-            learned = 0
-            with timer.time('learning'):
-                if len(agent.memory) > hyper_params.min_replay_size and agent.timestep % hyper_params.learning_freq == 0:
+            with timer.time('online_net_training'):
+                memory_reached_threshold = len(agent.memory) > hyper_params.min_replay_size
+                is_learning_step = agent.timestep % hyper_params.learning_freq == 0 
+                if memory_reached_threshold and is_learning_step:
                     loss = agent.learn(hyper_params.batch_size)
-                    learned = 1
+                    epoch_losses.append(float(loss.item()))
 
-                    if loss is not None:
-                        loss_value = loss.item() if hasattr(loss, 'item') else float(loss)
-                        epoch_losses.append(loss_value)
-
-                    if agent.timestep % 1000 == 0:
-                        print(f"loss: {loss}")
+            with timer.time('target_net_training'):
+                target_network_stale = agent.timestep % hyper_params.target_nn_update_freq == 0
+                if target_network_stale:
+                    agent.update_target_network()
+                    print(f"Timestep {agent.timestep}, Epoch {epoch}, Target Network updated")
 
             state = next_state
             total_reward += reward
-            agent.timestep += 1
 
             timer.stop('total_step')
 
-            if enable_perf_logs:
-                logger.add_timing_data([
-                    agent.timestep, epoch + 1,
-                    timer.get('action_selection'),
-                    timer.get('env_step'),
-                    timer.get('preprocessing'),
-                    timer.get('memory_add'),
-                    timer.get('learning'),
-                    timer.get('total_step'),
-                    learned
-                ])
+            logger.add_timing_data([
+                agent.timestep,
+                epoch,
+                timer.get('action_selection'),
+                timer.get('env_step'),
+                timer.get('preprocessing'),
+                timer.get('memory_add'),
+                timer.get('online_net_training'),
+                timer.get('target_net_training'),
+                timer.get('total_step')
+              ])
 
-                if agent.timestep % 10000 == 0:
-                    logger.flush_timing_buffer()
-                    timer.reset()
-
-            if agent.timestep % hyper_params.target_nn_update_freq == 0:
-                agent.update_target_network()
-                print(f"Timestep {agent.timestep}, Epoch {epoch + 1}, Epsilon: {agent.epsilon:.3f}")
+            if agent.timestep % 10000 == 0:
+                 logger.flush_timing_buffer()
+            
+            agent.timestep += 1
 
         rewards_per_epoch.append(total_reward)
 
         if len(epoch_losses) > 0:
             avg_loss = sum(epoch_losses) / len(epoch_losses)
-            logger.log_loss(epoch + 1, avg_loss)
+            logger.log_loss(epoch, avg_loss)
 
-        logger.log_reward(epoch + 1, total_reward)
-
-        print(f"Epoch {epoch + 1}/{hyper_params.epochs} completed - Total Reward: {total_reward}")
+        logger.log_reward(epoch, total_reward)
+        print(f"Epoch {epoch}/{hyper_params.epochs - 1} completed - Total Reward: {total_reward}")
 
     print("Training completed.")
     save_model(agent.model)
