@@ -2,9 +2,9 @@ import gymnasium
 import numpy as np
 from agent import DeepQLearningAgent
 from model_utils import *
+from training_logger import TrainingLogger
 import warnings
 import time
-import csv
 from datetime import datetime
 import argparse
 from pydantic import BaseModel, Field
@@ -45,47 +45,9 @@ def train(hyper_params: HyperParams, log_timing=False):
     device = agent.model.device
     print(f"Training on device: {device}")
 
-    # Generate timestamp suffix for file naming
+    # Initialize training logger
     timestamp = datetime.now().strftime('%Y%m%d_%H%M')
-
-    # Initialize timing logging if enabled
-    if log_timing:
-        csv_filename = f'training_timing_{timestamp}.csv'
-        csv_headers = ['step', 'epoch', 'action_selection_ms', 'env_step_ms', 'preprocessing_ms',
-                       'memory_add_ms', 'learning_ms', 'total_step_ms', 'learned']
-
-        # Create CSV file with headers
-        with open(csv_filename, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(csv_headers)
-
-        # Buffer for timing data (write every 10000 steps)
-        timing_buffer = []
-        print(f"Timing data will be logged to {csv_filename} every 10000 steps")
-    else:
-        print("Timing logging disabled - use --log-timing to enable")
-
-    # Initialize loss logging
-    loss_filename = f'training_loss_{timestamp}.csv'
-    loss_headers = ['epoch', 'avg_loss']
-
-    # Create loss CSV file with headers
-    with open(loss_filename, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(loss_headers)
-
-    print(f"Loss data will be logged to {loss_filename} after each epoch")
-
-    # Initialize reward logging
-    reward_filename = f'training_rewards_{timestamp}.csv'
-    reward_headers = ['epoch', 'total_reward']
-
-    # Create reward CSV file with headers
-    with open(reward_filename, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(reward_headers)
-
-    print(f"Reward data will be logged to {reward_filename} after each epoch")
+    logger = TrainingLogger(timestamp, log_timing)
 
     for epoch in range(hyper_params.epochs):
         state, _ = env.reset()
@@ -148,15 +110,11 @@ def train(hyper_params: HyperParams, log_timing=False):
 
             if log_timing:
                 total_step_time = (time.time() - step_start) * 1000
-                timing_buffer.append([agent.timestep, epoch + 1, action_time, env_time,
-                                    preprocess_time, memory_time, learn_time, total_step_time, learned])
+                logger.add_timing_data([agent.timestep, epoch + 1, action_time, env_time,
+                                       preprocess_time, memory_time, learn_time, total_step_time, learned])
 
                 if agent.timestep % 10000 == 0:
-                    with open(csv_filename, 'a', newline='') as csvfile:
-                        writer = csv.writer(csvfile)
-                        writer.writerows(timing_buffer)
-                    print(f"Wrote {len(timing_buffer)} timing records to {csv_filename}")
-                    timing_buffer.clear()
+                    logger.flush_timing_buffer()
 
             if agent.timestep % hyper_params.target_nn_update_freq == 0:
                 agent.update_target_network()
@@ -167,19 +125,12 @@ def train(hyper_params: HyperParams, log_timing=False):
         # Write loss data for this epoch
         if len(epoch_losses) > 0:
             avg_loss = sum(epoch_losses) / len(epoch_losses)
-            with open(loss_filename, 'a', newline='') as csvfile:
-                writer = csv.writer(csvfile)
-                writer.writerow([epoch + 1, avg_loss])
+            logger.log_loss(epoch + 1, avg_loss)
 
         # Write reward data for this epoch
-        with open(reward_filename, 'a', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow([epoch + 1, total_reward])
+        logger.log_reward(epoch + 1, total_reward)
 
         print(f"Epoch {epoch + 1}/{hyper_params.epochs} completed - Total Reward: {total_reward}")
-        if (epoch + 1) % 10 == 0:
-            if log_timing:
-                print(f"Timing data logged to {csv_filename} - {agent.timestep} total steps recorded")
 
     print("Training completed.")
     save_model(agent.model)
