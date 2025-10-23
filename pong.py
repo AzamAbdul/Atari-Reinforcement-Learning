@@ -18,7 +18,7 @@ class HyperParams(BaseModel):
     learning_freq: int = Field(1, ge=1)
     min_replay_size: int = Field(10_000, ge=0)
     learning_rate: float = Field(0.000_05, le=1)
-    target_nn_update_freq: int = Field(10_000, ge=1)
+    target_nn_update_freq: int = Field(5_000, ge=1)
 
 
 def parse_args():
@@ -32,7 +32,7 @@ def parse_args():
     return parser.parse_args()
 
 def train(hyper_params: HyperParams, enable_perf_logs=False):
-    env = gymnasium.make("ALE/Pong-v5")
+    env = gymnasium.make("ALE/Pong-v5", render_mode=None, full_action_space=False)
     n_actions = env.action_space.n
     agent = DeepQLearningAgent(learning_rate=hyper_params.learning_rate, gamma=hyper_params.gamma, n_actions=n_actions)
 
@@ -81,14 +81,15 @@ def train(hyper_params: HyperParams, enable_perf_logs=False):
                     loss = agent.learn(hyper_params.batch_size)
                     epoch_losses.append(float(loss.item()))
 
+            state = next_state
+            total_reward += reward
+            agent.timestep += 1
+
             with timer.time('target_net_training'):
                 target_network_stale = agent.timestep % hyper_params.target_nn_update_freq == 0
                 if target_network_stale:
                     agent.update_target_network()
                     print(f"Timestep {agent.timestep}, Epoch {epoch}, Target Network updated")
-
-            state = next_state
-            total_reward += reward
 
             timer.stop('total_step')
 
@@ -106,8 +107,6 @@ def train(hyper_params: HyperParams, enable_perf_logs=False):
 
             if agent.timestep % 10000 == 0:
                  logger.flush_timing_buffer()
-            
-            agent.timestep += 1
 
         rewards_per_epoch.append(total_reward)
 
