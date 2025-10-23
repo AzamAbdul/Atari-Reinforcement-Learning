@@ -8,8 +8,6 @@ def preprocess(image: np.ndarray) -> np.ndarray:
     if not isinstance(image, np.ndarray):
         raise ValueError(f"Expected a NumPy array, but got {type(image)}")
 
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-
     image = cv2.resize(image, (84, 110))
     image = image[13:97, :]
 

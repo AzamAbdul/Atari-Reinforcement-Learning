@@ -32,7 +32,7 @@ def parse_args():
     return parser.parse_args()
 
 def train(hyper_params: HyperParams, enable_perf_logs=False):
-    env = gymnasium.make("ALE/Pong-v5", render_mode=None, full_action_space=False)
+    env = gymnasium.make("ALE/Pong-v5", render_mode=None, full_action_space=False, obs_type="grayscale")
     n_actions = env.action_space.n
     agent = DeepQLearningAgent(learning_rate=hyper_params.learning_rate, gamma=hyper_params.gamma, n_actions=n_actions)
 
@@ -128,7 +128,7 @@ def play_pong(model_path='model.pth'):
     model.eval()
     total_rewards = []
 
-    env = gymnasium.make("ALE/Pong-v5", render_mode="human")
+    env = gymnasium.make("ALE/Pong-v5", render_mode="human", obs_type="grayscale")
 
     for episode in range(10):
         state, _ = env.reset()
