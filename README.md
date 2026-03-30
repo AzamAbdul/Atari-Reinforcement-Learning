@@ -18,9 +18,21 @@ The following list describes the diff between this fork and the original repo
 - Gradient clipping
 
 **Quality of life:**
-- CSV exports for rewards and losses for each training run
-- Commandline args for: profiling, and rendering
-  
+- CSV exports for rewards and losses during each training run
+- Commandline args for profiling and rendering
+
+## Usage
+
+```bash
+# Training
+python pong.py
+python pong.py --enable-perf-logs
+
+# Render Demonstration of model gameplay
+python pong.py --demo
+python pong.py --demo -m ./models/good_model.pth
+```
+
 ## Results
 
 **Rendering**
@@ -36,17 +48,6 @@ Green = [good_model.pth](https://github.com/AzamAbdul/Atari_RL_Playground/tree/m
 
 
 
-## Usage
-
-```bash
-# Training
-python pong.py                     # Train a new model
-python pong.py --enable-perf-logs  # Train with detailed performance logs
-
-# Render Demo
-python pong.py --demo                              # Render with default model (./models/model.pth)
-python pong.py --demo -m ./models/good_model.pth   # Render with path to a provided model
-```
 
 
 
