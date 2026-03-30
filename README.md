@@ -1,8 +1,6 @@
 # Reinforcement Learning for Atari
 Experiments with Reinforcement Learning to play Atari games. See the original [Google Deepmind Atari paper](https://arxiv.org/pdf/1312.5602). 
 
-At the time of writing, the described experiments are limited to 'Pong' with further expansion for other games planned.  
-
 ## Credits
 
 This repo is a modified fork of [Reinforcement Learning repo](https://github.com/BaptisteBell/ReinforcementLearning) authored by [@BaptisteBell](https://github.com/BaptisteBell) and [@bribridu59](https://github.com/bribridu59).
@@ -11,12 +9,12 @@ This repo is a modified fork of [Reinforcement Learning repo](https://github.com
 The following list describes the diff between this fork and the original repo
 
 **Training:**
-- Double DQN (instead of target vs online network trick)
+- Double DQN
 - Removed batch normalization
-- Modified hyperparameters (γ=0.98, slower ε decay, 10k warmup)
+- Modified hyperparameters
 
 **Performance:**
-- PyTorch compilation (~10-20% speedup)
+- PyTorch compilation
 - Fused AdamW optimizer
 - TF32 precision
 - Gradient clipping
@@ -38,12 +36,6 @@ Green = [good_model.pth](https://github.com/AzamAbdul/Atari_RL_Playground/tree/m
 ***Reward @ 500 episodes***
 ![alt text](https://raw.githubusercontent.com/AzamAbdul/Atari_RL_Playground/refs/heads/master/media/total_rewards_2025-10-21.png)
 
-## Future modifications
-- Checkpointing
-- Reward and Loss logging gated by cmdline flag
-- Expanded profiling
-- Experiments on more Atari games (beyond Pong)
-- Network architecture refinements
 
 
 ## Usage
