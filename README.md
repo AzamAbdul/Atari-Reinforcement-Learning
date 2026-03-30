@@ -41,9 +41,9 @@ Green = [good_model.pth](https://github.com/AzamAbdul/Atari_RL_Playground/tree/m
 
 ![alt text](https://raw.githubusercontent.com/AzamAbdul/Atari_RL_Playground/refs/heads/master/media/atari_pong_good_model.gif)
 
-***Loss @ 500 episodes***
+***Loss @ 500 episodes (each plot is a unique training run)***
 ![alt text](https://raw.githubusercontent.com/AzamAbdul/Atari_RL_Playground/refs/heads/master/media/avg_loss_20251021.png)
-***Reward @ 500 episodes***
+***Reward @ 500 episodes (each plot is a unique training run)***
 ![alt text](https://raw.githubusercontent.com/AzamAbdul/Atari_RL_Playground/refs/heads/master/media/total_rewards_2025-10-21.png)
 
 
