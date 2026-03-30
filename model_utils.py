@@ -5,9 +5,6 @@ import torch._dynamo.eval_frame
 import os
 
 def preprocess(image: np.ndarray) -> np.ndarray:
-    if not isinstance(image, np.ndarray):
-        raise ValueError(f"Expected a NumPy array, but got {type(image)}")
-
     image = cv2.resize(image, (84, 110))
     image = image[13:97, :]
 
@@ -32,21 +29,16 @@ def load_model(filepath="model.pth"):
 
     print(f"Loading model from {filepath}...")
 
-    # Handle compiled models and new PyTorch security settings
     try:
-        # First try with safe loading
         model = torch.load(filepath, weights_only=True)
         print("Successfully loaded with weights_only=True")
     except Exception as e1:
         print(f"Weights-only loading failed: {e1}")
         try:
-            # Try with weights_only=False
             model = torch.load(filepath, weights_only=False)
             print("Successfully loaded with weights_only=False")
         except Exception as e2:
-            print(f"Standard loading failed: {e2}")
             print("Attempting force load with compiled model support...")
-            # Force load with compiled model globals
             torch.serialization.add_safe_globals([torch._dynamo.eval_frame.OptimizedModule])
             model = torch.load(filepath, weights_only=False)
             print("Successfully force loaded compiled model")
@@ -56,7 +48,6 @@ def load_model(filepath="model.pth"):
 
 
 def save_model(model, filepath="model.pth"):
-    # Save the original model if it's compiled
     if hasattr(model, '_orig_mod'):
         print("Saving original model (uncompiled) for compatibility")
         torch.save(model._orig_mod, filepath)
