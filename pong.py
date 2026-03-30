@@ -41,7 +41,6 @@ def train(hyper_params: HyperParams, enable_perf_logs=False):
     rewards_per_epoch = []
     agent.timestep = 0
 
-    # Pre-allocate tensors to reduce allocation overhead
     device = agent.model.device
     print(f"Training on device: {device}")
 
