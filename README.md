@@ -19,7 +19,7 @@ The following list describes the diff between this fork and the original repo
 
 **Quality of life:**
 - CSV exports for rewards and losses for each training run
-- Commandline args for: profiling, and rendering of a provided model playing 'Pong'
+- Commandline args for: profiling, and rendering
   
 ## Results
 
