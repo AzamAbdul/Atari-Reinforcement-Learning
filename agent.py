@@ -38,30 +38,21 @@ class DeepQLearningAgent:
         # Enable TensorFloat-32 for better performance on modern GPUs
         if torch.cuda.is_available():
             torch.set_float32_matmul_precision('high')
-            print("TensorFloat-32 enabled for faster matrix operations")
 
-        # Compile models for 10-20% speedup (PyTorch 2.0+)
         try:
             self.model = torch.compile(self.model)
             self.target_net = torch.compile(self.target_net)
-            print("Models compiled successfully for optimized inference")
         except Exception as e:
             print(f"Model compilation not available: {e}")
-            print("Using standard models (consider upgrading to PyTorch 2.0+)")
 
     def update_target_network(self):
-        # Handle compiled models properly
         if hasattr(self.model, '_orig_mod') and hasattr(self.target_net, '_orig_mod'):
-            # Both models are compiled
             self.target_net._orig_mod.load_state_dict(self.model._orig_mod.state_dict())
         elif hasattr(self.model, '_orig_mod'):
-            # Only main model is compiled
             self.target_net.load_state_dict(self.model._orig_mod.state_dict())
         elif hasattr(self.target_net, '_orig_mod'):
-            # Only target model is compiled
             self.target_net._orig_mod.load_state_dict(self.model.state_dict())
         else:
-            # Neither model is compiled
             self.target_net.load_state_dict(self.model.state_dict())
 
     def add_memory(self, state, action, reward, next_state, done):
@@ -88,7 +79,6 @@ class DeepQLearningAgent:
 
         states, actions, rewards, next_states, dones = self.sample_memory(batch)
 
-        # Direct device allocation to reduce tensor copy overhead
         device = self.model.device
         states = torch.tensor(states, dtype=torch.float, device=device)
         actions = torch.tensor(actions, dtype=torch.long, device=device)
@@ -112,12 +102,8 @@ class DeepQLearningAgent:
 
         self.optimizer.zero_grad()
         loss.backward()
-        # Gradient clipping for stability
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
         self.optimizer.step()
 
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
-
-        # Return loss without .item() to avoid GPU→CPU sync
-        # Only convert to CPU when actually needed for logging
         return loss.detach()
