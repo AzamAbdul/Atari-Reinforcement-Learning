@@ -47,7 +47,6 @@ class DeepQNetwork(nn.Module):
 def build_dqn(input_dim, n_actions, lr=0.0001, activation_fn=nn.ReLU):
     model = DeepQNetwork(input_dim, n_actions, activation_fn)
 
-    # Use fused optimizer for fewer kernel launches
     if torch.cuda.is_available():
         try:
             optimizer = optim.AdamW(model.parameters(), lr=lr, fused=True)
